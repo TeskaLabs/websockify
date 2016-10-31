@@ -86,9 +86,26 @@ Traffic Legend:
             msg += " (using SSL)"
         self.log_message(msg)
 
+        try:
+            client_id = self.path.split("/")[1]
+        except:
+            raise Exception("Client Id is not in request path")
+
         tsock = websocket.WebSocketServer.socket(self.server.target_host,
                                                  self.server.target_port,
                 connect=True, use_ssl=self.server.ssl_target, unix_socket=self.server.unix_target)
+
+        # Socks4a
+        from socks4a import SOCKS4A
+        sock4a = SOCKS4A(tsock)
+        if not sock4a.do_CONNECT(
+            dest_port=5900,
+            dest_ip="0.0.0.1",
+            user_id="",
+            remote_name=client_id):
+            tsock.shutdown(socket.SHUT_RDWR)
+            tsock.close()
+            raise Exception("Socks4a CONNECT failed.")
 
         self.request.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         if not self.server.wrap_cmd and not self.server.unix_target:
