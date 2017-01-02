@@ -1,0 +1,52 @@
+#! /bin/sh
+
+# Installation instructions:
+# cp init.d/ubuntu/websockify /etc/init.d/websockify
+# chmod a+x /etc/init.d/websockify
+# service websockify start
+
+BINDIR=/opt/websockify
+WEBSOCKIFY=$BINDIR/run
+WEBSOCKIFY_PORT=6080
+GW_HOST=10.17.154.5:12367
+PIDFILE=/var/run/websockify.pid
+CERT_FILE=/etc/letsencrypt/live/poc01-scp.teskalabs.com/fullchain.pem
+KEY_FILE=/etc/letsencrypt/live/poc01-scp.teskalabs.com/privkey.pem
+LOG_FILE=/var/log/websockify.log
+USER=root
+
+DAEMON_OPTS="--log-file=$LOG_FILE --cert=$CERT_FILE --key=$KEY_FILE --ssl-only 0.0.0.0:$WEBSOCKIFY_PORT $GW_HOST"
+
+# See how we were called.
+case "$1" in
+  start)
+	[ -x $WEBSOCKIFY ] || exit 1
+	echo -n "Starting websockify server: "
+	start-stop-daemon --start --user "$USER" -b -m --pidfile $PIDFILE --exec $WEBSOCKIFY -- $DAEMON_OPTS
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/websockify
+	;;
+  stop)
+	# Stop daemon.
+	echo -n "Shutting down websockify server: "
+	start-stop-daemon --stop --oknodo --pidfile $PIDFILE
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/websockify
+	;;
+  status)
+	status $(cat $PIDFILE)
+	RETVAL=$?
+	;;
+  restart|reload)
+	$0 stop
+	$0 start
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart}"
+	RETVAL=3
+	;;
+esac
+
+exit $RETVAL
