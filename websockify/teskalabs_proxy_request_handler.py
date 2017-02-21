@@ -5,6 +5,8 @@ from websockify.websocketproxy import ProxyRequestHandler
 
 class InvalidRequestException(Exception):
     pass
+class InvalidNonceException(Exception):
+    pass
 
 class TLRAProxyRequestHandler(ProxyRequestHandler):
 
@@ -56,12 +58,20 @@ class TLRAProxyRequestHandler(ProxyRequestHandler):
 
             :return boolean:
         """
+        from .token import Token
  
         secret = ''
         if self.server.scp_config is not None:
             if self.server.scp_config.has_option("general", "secret"):
                 secret = self.server.scp_config.get("general", "secret")
-        
+
+        try:
+            token = Token(secret)
+            token.parse(nonce)
+            token.validate()
+        except Exception as e:
+            return False
+
         return True
 
 
@@ -87,14 +97,15 @@ class TLRAProxyRequestHandler(ProxyRequestHandler):
 
     def validate_connection(self):
         """ Overrides the ProxyRequestHandler validate_connection
-
-            Calls validate_nonce and raises InvalidNonceException if it returns False
         """
-        pass
+        ProxyRequestHandler.validate_connection(self)
 
 
     def new_websocket_client(self):
         """ Called after a new WebSocket connection has been established.
+
+            :throws AuthenticationError:
+            :throws InvalidRequestException:
         """
 
         # Checking for a token is done in validate_connection()
