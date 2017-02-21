@@ -86,44 +86,9 @@ Traffic Legend:
             msg += " (using SSL)"
         self.log_message(msg)
 
-        # Path
-        path_parts = self.path.split("/")
-        
-        # Client ID
-        if len(path_parts) < 2:
-            raise Exception("Client Id is not in request path")
-
-        client_id = path_parts[1]
-
-        # Target host and port
-        target_host = self.server.target_host
-        target_port = self.server.target_port
-
-        if len(path_parts) > 2:
-            target = path_parts[2]
-            target_parts = target.split(":")
-            target_host=target_parts[0]
-
-            if len(target_parts) > 1:
-               target_port=target_parts[1]
-
-        # Todo: validate target host and port
-        # Conect to target
-        tsock = websocket.WebSocketServer.socket(target_host,
-                                                target_port,
+        tsock = websocket.WebSocketServer.socket(self.server.target_host,
+                                                 self.server.target_port,
                 connect=True, use_ssl=self.server.ssl_target, unix_socket=self.server.unix_target)
-
-        # Socks4a
-        from socks4a import SOCKS4A
-        sock4a = SOCKS4A(tsock)
-        if not sock4a.do_CONNECT(
-            dest_port=5900,
-            dest_ip="0.0.0.1",
-            user_id="",
-            remote_name=client_id):
-            tsock.shutdown(socket.SHUT_RDWR)
-            tsock.close()
-            raise Exception("Socks4a CONNECT failed.")
 
         self.request.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         if not self.server.wrap_cmd and not self.server.unix_target:
@@ -459,6 +424,9 @@ def websockify_init():
     parser.add_option("--log-file", metavar="FILE",
             dest="log_file",
             help="File where logs will be saved")
+    parser.add_option("--scp-config-file", metavar="FILE",
+            dest="scp_config_file",
+            help="The SeaCat Panel config file")
 
 
     (opts, args) = parser.parse_args()
@@ -566,7 +534,9 @@ def websockify_init():
         server.serve_forever()
     else:
         # Use internal service framework
-        server = WebSocketProxy(**opts.__dict__)
+        from .teskalabs_proxy_request_handler import TLRAProxyRequestHandler
+        from .teskalabs_websocket_proxy import TLRAWebSocketProxy
+        server = TLRAWebSocketProxy(RequestHandlerClass=TLRAProxyRequestHandler, **opts.__dict__)
         server.start_server()
 
 
