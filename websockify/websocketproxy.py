@@ -86,13 +86,31 @@ Traffic Legend:
             msg += " (using SSL)"
         self.log_message(msg)
 
-        try:
-            client_id = self.path.split("/")[1]
-        except:
+        # Path
+        path_parts = self.path.split("/")
+        
+        # Client ID
+        if len(path_parts) < 2:
             raise Exception("Client Id is not in request path")
 
-        tsock = websocket.WebSocketServer.socket(self.server.target_host,
-                                                 self.server.target_port,
+        client_id = path_parts[1]
+
+        # Target host and port
+        target_host = self.server.target_host
+        target_port = self.server.target_port
+
+        if len(path_parts) > 2:
+            target = path_parts[2]
+            target_parts = target.split(":")
+            target_host=target_parts[0]
+
+            if len(target_parts) > 1:
+               target_port=target_parts[1]
+
+        # Todo: validate target host and port
+        # Conect to target
+        tsock = websocket.WebSocketServer.socket(target_host,
+                                                target_port,
                 connect=True, use_ssl=self.server.ssl_target, unix_socket=self.server.unix_target)
 
         # Socks4a
