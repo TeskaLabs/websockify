@@ -130,9 +130,9 @@ class TLRAProxyRequestHandler(ProxyRequestHandler):
         target_port = target_port if target_port is not None else self.server.target_port
 
         # Validate TLRA Nonce
-        if not self.validate_nonce(params.get('tlra_nonce', '')):
+        if not self.validate_nonce(params.get('nonce', '')):
             from .auth_plugins import AuthenticationError
-            raise AuthenticationError('Invalid TLRA Nonce')
+            raise AuthenticationError('Invalid Nonce')
 
         # Create socket
         tsock = websocket.WebSocketServer.socket(target_host,
