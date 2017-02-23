@@ -68,7 +68,8 @@ class TLRAProxyRequestHandler(ProxyRequestHandler):
         try:
             token = Token(secret)
             token.parse(nonce)
-            token.validate()
+            # Valid 5 minutes
+            token.validate(max_age=300.0)
         except Exception as e:
             return False
 
