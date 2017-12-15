@@ -129,8 +129,8 @@ class TLRAProxyRequestHandler(ProxyRequestHandler):
         target_host = target_host if target_host is not None else self.server.target_host
         target_port = target_port if target_port is not None else self.server.target_port
 
-        # Validate TLRA Nonce
-        if not self.validate_nonce(params.get('nonce', '')):
+        # Validate CVIO Nonce
+        if not self.validate_nonce(params.get('cvio_nonce', '')):
             from .auth_plugins import AuthenticationError
             raise AuthenticationError('Invalid Nonce')
 
