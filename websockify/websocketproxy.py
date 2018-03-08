@@ -24,6 +24,7 @@ try:
 except:
     from cgi import parse_qs
     from urlparse import urlparse
+from .teskalabs_logging import logger_init as tl_logger_init
 
 class ProxyRequestHandler(websocket.WebSocketRequestHandler):
 
@@ -427,9 +428,21 @@ def websockify_init():
     parser.add_option("--scp-config-file", metavar="FILE",
             dest="scp_config_file",
             help="The SeaCat Panel config file")
+    parser.add_option("--syslog", metavar="ARG",
+        action="store_true",
+        dest="syslog",
+        help="Enables logging to syslog")
+    parser.add_option("--syslog-socket", metavar="FILE",
+        default="/dev/log",
+        dest="syslog_socket",
+        help="Sets path to syslog socket.")
 
 
     (opts, args) = parser.parse_args()
+
+    tl_logger_init(
+        logger=logging.getLogger(WebSocketProxy.log_prefix),
+        opts=opts)
 
     if opts.log_file:
         opts.log_file = os.path.abspath(opts.log_file)

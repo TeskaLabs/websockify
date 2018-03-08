@@ -6,6 +6,9 @@ class TLRAWebSocketProxy(WebSocketProxy):
     
     def __init__(self, RequestHandlerClass=TLRAProxyRequestHandler, *args, **kwargs):
         self.scp_config_file = kwargs.pop('scp_config_file', None)
+        kwargs.pop('syslog')
+        kwargs.pop('syslog_socket')
+
         self.scp_config = self.parse_scp_config_file(self.scp_config_file)
         WebSocketProxy.__init__(self, RequestHandlerClass=RequestHandlerClass, *args, **kwargs)
 
